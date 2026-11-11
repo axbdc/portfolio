@@ -47,7 +47,8 @@ __HEAD__
   .cena.de-direita { transform: translateX(60px); }
   .cena.de-esquerda { transform: translateX(-60px); }
   .cena.ativa.de-direita, .cena.ativa.de-esquerda { transform: none; }
-  .cena img { position: absolute; display: block; pointer-events: none; -webkit-user-drag: none; }
+  .cena > img { position: absolute; display: block; pointer-events: none; -webkit-user-drag: none; }
+  .cena > div img { display: inline-block; vertical-align: middle; -webkit-user-drag: none; }
   .zona { position: absolute; cursor: pointer; z-index: 5; -webkit-tap-highlight-color: transparent; border-radius: 12px; }
   .zona:focus-visible { outline: 3px solid #fff; }
   .ativa .a-kb { animation: kb 9s ease-out both; }
@@ -186,3 +187,11 @@ def build(spec, out, title="Rich media", bg="#000"):
             .replace("__HEAD__", spec.get("head", "")).replace("__SPEC__", json.dumps(spec, separators=(",", ":"))))
     open(out, "w").write(html)
     return len(html)
+
+
+FONT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
+
+def font(family, file, weight=400):
+    data = open(os.path.join(FONT_DIR, file), "rb").read()
+    return ("@font-face{font-family:'%s';font-weight:%d;font-style:normal;font-display:block;"
+            "src:url(data:font/woff2;base64,%s) format('woff2')}" % (family, weight, base64.b64encode(data).decode()))
