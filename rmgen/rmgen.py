@@ -36,6 +36,7 @@ TPL = r"""<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__TITLE__</title>
+__HEAD__
 <style>
   html, body { margin: 0; background: #e4e2dd; font-family: Arial, Helvetica, sans-serif; }
   #telemovel { width: 360px; margin: 24px auto; padding: 64px 16px; background: #111; border-radius: 48px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
@@ -95,11 +96,13 @@ var SPEC = __SPEC__;
     var el = document.createElement("div");
     el.className = "cena"; el.style.background = s.bg || "transparent";
     (s.layers || []).forEach(function (l) {
-      var img = document.createElement("img");
-      img.src = SPEC.img[l.img]; img.alt = "";
+      var img;
+      if (l.html != null) { img = document.createElement("div"); img.innerHTML = l.html; img.style.position = "absolute"; if (l.css) img.style.cssText += l.css; if (l.id) img.id = l.id; }
+      else { img = document.createElement("img"); img.src = SPEC.img[l.img]; img.alt = ""; }
       img.style.left = l.x + "px"; img.style.top = l.y + "px";
       img.style.width = l.w + "px"; img.style.height = l.h + "px";
-      if (l.a) img.className = "a-" + l.a;
+      if (l.a) img.className += " a-" + l.a;
+      if (l.cls) img.className += " " + l.cls;
       if (l.d) img.style.animationDelay = l.d + "ms";
       if (l.o) img.style.transformOrigin = l.o;
       if (l.mx != null) img.style.setProperty("--mx", l.mx + "px");
@@ -131,6 +134,7 @@ var SPEC = __SPEC__;
     void novo.el.offsetWidth;
     novo.el.classList.add("ativa");
     atual = id;
+    document.dispatchEvent(new CustomEvent("cena", { detail: id }));
     var k = ordem.indexOf(id);
     Array.prototype.forEach.call(P.children, function (d, i) { d.className = i === k ? "on" : ""; });
     P.style.display = k < 0 ? "none" : "flex";
@@ -158,7 +162,9 @@ var SPEC = __SPEC__;
   document.getElementById("fechado").addEventListener("click", function () {
     this.style.display = "none"; var a = atual; atual = null; cenas[a].el.classList.remove("ativa"); ir(SPEC.start);
   });
+  window.RM = { ir: ir, atual: function () { return atual; } };
   ir(SPEC.start);
+  if (SPEC.js) (new Function(SPEC.js))();
 })();
 </script>
 </body>
@@ -177,6 +183,6 @@ def build(spec, out, title="Rich media", bg="#000"):
     html = (TPL.replace("__TITLE__", title).replace("__BG__", bg)
             .replace("__W__", str(W)).replace("__H__", str(H))
             .replace("__SC__", "%.5f" % sc).replace("__LEFT__", "%.1f" % left).replace("__TOP__", "%.1f" % top)
-            .replace("__SPEC__", json.dumps(spec, separators=(",", ":"))))
+            .replace("__HEAD__", spec.get("head", "")).replace("__SPEC__", json.dumps(spec, separators=(",", ":"))))
     open(out, "w").write(html)
     return len(html)
